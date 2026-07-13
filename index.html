@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UNC Degree Planner — Env Studies + Econ + Honors</title>
+<style>
+:root{
+  --surface:#fcfcfb; --page:#f9f9f7; --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --border:rgba(11,11,11,.10);
+  --taken:#2a78d6; --taken-deep:#1c5cab; --planned:#86b6ef; --planned-ink:#1c5cab;
+  --good:#0ca30c; --good-text:#006300; --warn-text:#8a5a00;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --surface:#1a1a19; --page:#0d0d0d; --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --border:rgba(255,255,255,.10);
+    --taken:#3987e5; --taken-deep:#6da7ec; --planned:#184f95; --planned-ink:#86b6ef;
+    --good:#0ca30c; --good-text:#0ca30c; --warn-text:#fab219;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;padding-bottom:70px}
+header{padding:14px 16px 6px}
+h1{font-size:19px;margin:0 0 2px}
+.sub{color:var(--ink2);font-size:12.5px}
+.wrap{display:grid;grid-template-columns:1fr;gap:14px;padding:10px 12px;max-width:1180px;margin:0 auto}
+@media(min-width:960px){.wrap{grid-template-columns:5fr 4fr}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:12px}
+.card h2{font-size:15px;margin:0 0 8px}
+.card h3{font-size:13px;margin:12px 0 4px;color:var(--ink2);text-transform:uppercase;letter-spacing:.04em}
+/* summary tiles */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:0 12px}
+.tile{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:9px 12px}
+.tile .v{font-size:22px;font-weight:650}
+.tile .l{font-size:11.5px;color:var(--ink2)}
+.tile .p{font-size:11.5px;color:var(--planned-ink)}
+/* requirement rows */
+.req{margin:9px 0}
+.req .top{display:flex;justify-content:space-between;gap:8px;font-size:13.5px}
+.req .top .st{white-space:nowrap;font-size:12.5px}
+.done{color:var(--good-text);font-weight:600}
+.willdone{color:var(--planned-ink);font-weight:600}
+.todo{color:var(--ink2)}
+.bar{height:8px;background:var(--grid);border-radius:4px;margin-top:4px;overflow:hidden;display:flex}
+.bar .t{background:var(--taken);height:100%}
+.bar .p{background:var(--planned);height:100%}
+.note{font-size:12px;color:var(--muted);margin-top:2px}
+.detail{font-size:12px;color:var(--ink2)}
+/* legend */
+.legend{display:flex;gap:14px;font-size:12px;color:var(--ink2);margin:6px 12px 0;flex-wrap:wrap}
+.sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:4px}
+/* course rows */
+.crs{display:flex;align-items:flex-start;gap:8px;padding:6px 4px;border-bottom:1px solid var(--grid)}
+.crs:last-child{border-bottom:none}
+.crs .info{flex:1;min-width:0}
+.crs .nm{font-size:13.5px}
+.crs .meta{font-size:11.5px;color:var(--muted)}
+button.state{min-width:86px;border-radius:8px;border:1.5px solid var(--grid);background:transparent;color:var(--ink2);font:12.5px system-ui;padding:5px 6px;cursor:pointer}
+button.state.planned{border-color:var(--planned-ink);color:var(--planned-ink);background:color-mix(in srgb,var(--planned) 22%,transparent)}
+button.state.taken{border-color:var(--taken);background:var(--taken);color:#fff;font-weight:600}
+.flag{display:inline-block;border:1px solid var(--grid);color:var(--muted);border-radius:6px;font-size:10.5px;padding:0 5px;margin-left:5px;cursor:pointer;user-select:none}
+.flag.on{border-color:var(--taken);color:var(--taken);font-weight:700}
+select,input[type=text],input[type=number]{background:var(--surface);color:var(--ink);border:1px solid var(--grid);border-radius:8px;padding:6px 8px;font:13.5px system-ui}
+label.ctl{display:block;font-size:12.5px;color:var(--ink2);margin:8px 0 2px}
+.ctlrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.chk{font-size:13.5px}
+.btn{background:var(--surface);border:1px solid var(--grid);color:var(--ink);border-radius:8px;padding:7px 12px;font:13px system-ui;cursor:pointer}
+.btn.primary{background:var(--taken);border-color:var(--taken);color:#fff}
+.foot{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--border);padding:8px 14px;display:flex;gap:10px;align-items:center;font-size:12px;color:var(--ink2)}
+.foot .btn{white-space:nowrap}
+.warn{color:var(--warn-text)}
+details.grp{border:1px solid var(--grid);border-radius:10px;margin:8px 0;padding:2px 10px}
+details.grp summary{cursor:pointer;font-size:13.5px;font-weight:600;padding:7px 0;list-style-position:inside}
+.disclaimer{font-size:11.5px;color:var(--muted);margin:8px 12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>UNC Degree Planner</h1>
+  <div class="sub">Environmental Studies B.A. + Economics B.A. + Honors Carolina · entering Fall 2026 · built from the 2026–27 catalog (verified 7/13/2026)</div>
+</header>
+
+<div class="tiles" id="tiles"></div>
+<div class="legend">
+  <span><span class="sw" style="background:var(--taken)"></span>taken</span>
+  <span><span class="sw" style="background:var(--planned)"></span>planned ("what if")</span>
+  <span><span class="sw" style="background:var(--grid)"></span>remaining</span>
+</div>
+
+<div class="wrap">
+<div><!-- LEFT: requirements -->
+  <div class="card">
+    <h2>Choices</h2>
+    <div class="ctlrow">
+      <div><label class="ctl">ENEC track</label>
+        <select id="trackSel"><option value="std">Standard (concentration)</option><option value="sus">Sustainability Track</option></select></div>
+      <div id="concWrap"><label class="ctl">Concentration</label>
+        <select id="concSel">
+          <option value="EBDM">Env Behavior &amp; Decision Making</option>
+          <option value="ES">Ecology &amp; Society</option>
+          <option value="AgH">Agriculture &amp; Health</option>
+          <option value="PED">Population, Env &amp; Development</option>
+        </select></div>
+      <div><label class="ctl">Global Language completed/placed</label>
+        <select id="langSel"><option value="0">None yet</option><option value="1">Level 1</option><option value="2">Level 2</option><option value="3">Level 3 (requirement met)</option></select></div>
+    </div>
+    <label class="chk" style="display:block;margin-top:10px"><input type="checkbox" id="abroadChk"> Spring Forward semester abroad (Spring 2027) — counts ~15 transfer hrs, High-Impact credit, +3 honors hrs</label>
+  </div>
+  <div class="card"><h2>First-Year Foundations <span class="note">(complete in first year; Global Language exempt)</span></h2><div id="reqFYF"></div></div>
+  <div class="card"><h2>Focus Capacities (9) + Lab</h2><div id="reqFC"></div>
+    <div class="note">Each course fills at most one capacity — assignment below is automatic (best fit). Many other courses carry FC codes; add them under “Custom.”</div></div>
+  <div class="card"><h2>Reflection &amp; Integration + other gen ed</h2><div id="reqRI"></div></div>
+  <div class="card"><h2 id="enecTitle">Environmental Studies B.A.</h2><div id="reqENEC"></div></div>
+  <div class="card"><h2>Economics B.A.</h2><div id="reqECON"></div>
+    <div class="note">Chain: ECON 101 + calculus → ECON 400 &amp; 410 → ECON 420 and all 400+/500-level electives. Grades of C or better required in ECON 101/400/410.</div></div>
+  <div class="card"><h2>Honors Carolina (Laureate)</h2><div id="reqHNRS"></div>
+    <div class="note">Also: cumulative GPA ≥ 3.0 every semester. Senior thesis (ECON 691H/692H or ENEC 693H/694H) is separate from Laureate status. At most half of honors hours may come from study abroad.</div></div>
+</div>
+
+<div><!-- RIGHT: courses -->
+  <div class="card">
+    <h2>Courses — tap to cycle: <span style="color:var(--muted)">not taken</span> → <span style="color:var(--planned-ink)">planned</span> → <span style="color:var(--taken)">taken</span></h2>
+    <div class="note" style="margin-bottom:6px">Chips: <b>H</b> = honors section (adds honors hrs) · <b>FYL</b> = designated First-Year-Launch section</div>
+    <div id="courseList"></div>
+  </div>
+  <div class="card">
+    <h2>Add a custom course</h2>
+    <div class="ctlrow">
+      <input type="text" id="cName" placeholder="Name (e.g., HIST 127)" style="flex:1;min-width:140px">
+      <input type="number" id="cHrs" value="3" min="0" max="8" style="width:60px" title="credit hours">
+    </div>
+    <div class="ctlrow" style="margin-top:6px">
+      <select id="cFc"><option value="">No Focus Capacity</option><option>AESTH</option><option>CREATE</option><option>PAST</option><option>VALUES</option><option>GLOBAL</option><option>NATSCI</option><option>POWER</option><option>QUANT</option><option>KNOWING</option></select>
+      <select id="cTag"><option value="">No other attribute</option><option value="lab">FC-Lab</option><option value="inter">Interdisciplinary</option><option value="fad">Am. Democracy</option><option value="comm">Comm Beyond Carolina</option><option value="res">Research &amp; Discovery</option><option value="hi">High-Impact</option><option value="lfit">LFIT</option><option value="econEl4">ECON elective 400-lvl</option><option value="econEl5">ECON elective 500-lvl</option><option value="concAny">ENEC concentration/pillar (any)</option></select>
+      <label class="chk"><input type="checkbox" id="cHon"> honors</label>
+      <button class="btn" id="cAdd">Add</button>
+    </div>
+  </div>
+  <div class="disclaimer">Planning aid only — grounded in the 2026–27 catalog but <b>not</b> an official degree audit. The official check is the Tar Heel Tracker in ConnectCarolina + his academic advisor. Prerequisite notes shown per course; unverified items from the research carry over (see the full course map document).</div>
+</div>
+</div>
+
+<div class="foot">
+  <button class="btn primary" id="saveBtn">Copy save-link</button>
+  <button class="btn" id="resetBtn">Reset</button>
+  <span id="saveMsg">Progress is stored in the page address — bookmark or re-copy the link after changes.</span>
+</div>
+
+<script>
+"use strict";
+/* ---------- catalog ---------- */
+const FCS=["AESTH","CREATE","PAST","VALUES","GLOBAL","NATSCI","POWER","QUANT","KNOWING"];
+const C=[ // id,name,hrs,group, tags
+ {id:"hnrs101",n:"HNRS 101 — College Thriving (honors)",h:1.5,g:"Foundations",t:{idst101:1,hon:1},m:"fall of 1st year only"},
+ {id:"idst101",n:"IDST 101 — College Thriving (non-honors)",h:1,g:"Foundations",t:{idst101:1}},
+ {id:"idst111",n:"IDST 111L — Data Literacy Lab",h:1,g:"Foundations",t:{idst111:1},m:"1st year"},
+ {id:"engl105",n:"ENGL 105 — Composition & Rhetoric",h:3,g:"Foundations",t:{engl:1},m:"sections 200+ = discipline-focused"},
+ {id:"fysem",n:"First-Year Seminar (any dept)",h:3,g:"Foundations",t:{fy:1},he:1,m:"H = honors FY seminar"},
+ {id:"m130",n:"MATH 130 — Precalculus",h:3,g:"Math & Stats",t:{fc:["QUANT"]},m:"if placement requires"},
+ {id:"m231",n:"MATH 231 — Calculus I",h:4,g:"Math & Stats",t:{fc:["QUANT"],calc:1,c231:1},he:1,m:"required for ENEC standard track; keeps all doors open"},
+ {id:"apcalc",n:"AP Calculus credit (→ MATH 231)",h:4,g:"Math & Stats",t:{fc:["QUANT"],calc:1,c231:1},m:"AB/BC score 3+"},
+ {id:"m152",n:"MATH 152 — Business Calculus",h:3,g:"Math & Stats",t:{fc:["QUANT"],calc:1},m:"terminal — closes MATH 232 path"},
+ {id:"s113",n:"STOR 113 — Decision Models",h:3,g:"Math & Stats",t:{calc:1}},
+ {id:"s155",n:"STOR 155 — Intro Statistics",h:3,g:"Math & Stats",t:{fc:["QUANT"],stats:1,sk:["stats"],ssk:["ana"]},m:"prereq MATH 110"},
+ {id:"s120",n:"STOR 120 — Data Science 1",h:4,g:"Math & Stats",t:{stats:1}},
+ {id:"data110",n:"DATA 110",h:3,g:"Math & Stats",t:{stats:1}},
+ {id:"e101",n:"ECON 101 — Intro to Economics",h:4,g:"Economics",t:{fc:["KNOWING"],egate:1},he:1,le:1,m:"gateway for BOTH majors · C or better needed"},
+ {id:"e400",n:"ECON 400 — Data Sci & Econometrics",h:4,g:"Economics",t:{fc:["QUANT"],ecore:1,sk:["stats"],ssk:["ana"]},m:"prereq: ECON 101 (C) + calculus · also an ENEC skills course"},
+ {id:"e410",n:"ECON 410 — Intermediate Micro",h:4,g:"Economics",t:{fc:["KNOWING"],ecore:1},m:"prereq: ECON 101 (C) + calculus"},
+ {id:"e420",n:"ECON 420 — Intermediate Macro",h:3,g:"Economics",t:{ecore:1},m:"prereq: ECON 410 (C)"},
+ {id:"e455",n:"ECON 455 — Environmental Econ Theory",h:3,g:"Economics",t:{eel:400,pil:["eco"]},m:"prereq: ECON 400+410 · counts for both majors (Sustainability pillar)"},
+ {id:"e470",n:"ECON 470 — Econometrics",h:3,g:"Economics",t:{eel:400},m:"prereq: ECON 400+410 · key for honors/grad school"},
+ {id:"e4a",n:"ECON 400-level elective (any)",h:3,g:"Economics",t:{eel:400}},
+ {id:"e4b",n:"ECON 400-level elective (any, 2nd)",h:3,g:"Economics",t:{eel:400}},
+ {id:"e5a",n:"ECON 500-level elective (any)",h:3,g:"Economics",t:{eel:500},m:"≥1 at 500+ required"},
+ {id:"e691",n:"ECON 691H — Honors Thesis I",h:3,g:"Economics",t:{eel:500,hon:1},m:"senior fall · 3.5 econ GPA"},
+ {id:"e692",n:"ECON 692H — Honors Thesis II",h:3,g:"Economics",t:{eel:500,hon:1,res:1},m:"senior spring · thesis + defense"},
+ {id:"n201",n:"ENEC 201 — Environment & Society",h:4,g:"Env Studies core",t:{fc:["GLOBAL","POWER"],ncore:1},le:1,m:"core, both tracks"},
+ {id:"n202",n:"ENEC 202I — Intro Environmental Sciences",h:4,g:"Env Studies core",t:{fc:["NATSCI"],lab:1,inter:1,nstd:1},m:"core (standard track) · NATSCI + Lab + Interdisciplinary"},
+ {id:"n307",n:"ENEC 307 — Energy & Material Flows",h:3,g:"Env Studies core",t:{nsus:1},m:"Sustainability core · prereq ENEC 201 + calculus"},
+ {id:"n698",n:"ENEC 698 — Capstone",h:3,g:"Env Studies core",t:{cap:1},m:"senior capstone"},
+ {id:"n693",n:"ENEC 693H — Honors Research",h:3,g:"Env Studies core",t:{hon:1,res:1,conc:["EBDM","ES","AgH","PED"]},m:"DUS permission · Research gen ed"},
+ {id:"n694",n:"ENEC 694H — Honors Project",h:3,g:"Env Studies core",t:{hon:1,cap:1,conc:["EBDM","ES","AgH","PED"]},m:"can replace ENEC 698 capstone"},
+ {id:"b101",n:"BIOL 101 + 101L",h:4,g:"Science (standard track)",t:{alliedbio:1}},
+ {id:"b103",n:"BIOL 103",h:3,g:"Science (standard track)",t:{earth:1},m:"prereq BIOL 101"},
+ {id:"b104",n:"BIOL 104 — Biodiversity",h:3,g:"Science (standard track)",t:{earth:1},m:"prereq BIOL 101+L"},
+ {id:"em200",n:"EMES 200 — The Solid Earth",h:3,g:"Science (standard track)",t:{earth:1},m:"no prereq"},
+ {id:"em201",n:"EMES 201 — Earth's Surface",h:3,g:"Science (standard track)",t:{earth:1},m:"no prereq"},
+ {id:"em202",n:"EMES 202 — Oceanography",h:3,g:"Science (standard track)",t:{earth:1},m:"wants 2 prior science courses"},
+ {id:"n324",n:"ENEC/EMES 324 — Water in Our World",h:3,g:"Science (standard track)",t:{earth:1,conc:["ES","AgH","PED"]},m:"no prereq"},
+ {id:"chem",n:"CHEM 101/101L + 102/102L (sequence)",h:8,g:"Science (standard track)",t:{sci:1},m:"needs only MATH 110 — low-friction option"},
+ {id:"p114",n:"PHYS 114 + 115 (sequence)",h:8,g:"Science (standard track)",t:{sci:1},m:"needs MATH 130-level"},
+ {id:"p118",n:"PHYS 118 + 119 (sequence)",h:8,g:"Science (standard track)",t:{sci:1},m:"needs MATH 231/232/233"},
+ {id:"g370",n:"GEOG 370 — Geospatial Technologies",h:3,g:"Skills courses",t:{sk:["gis","rs"],ssk:["gisrs"]},m:"no prereq — gateway to GIS/RS"},
+ {id:"g491",n:"GEOG 491 — GIS",h:3,g:"Skills courses",t:{sk:["gis"],ssk:["gisrs"]},m:"prereq GEOG 370"},
+ {id:"g477",n:"GEOG 477 — Remote Sensing",h:3,g:"Skills courses",t:{sk:["rs"],ssk:["gisrs"]},m:"prereq GEOG 370"},
+ {id:"a419",n:"ANTH 419 (GIS)",h:3,g:"Skills courses",t:{sk:["gis"]}},
+ {id:"n479",n:"ENEC 479 — Landscape Analysis",h:3,g:"Skills courses",t:{sk:["gis"],ssk:["gisrs"],conc:["ES"]}},
+ {id:"em203",n:"EMES 203 (analytics)",h:3,g:"Skills courses",t:{sk:["stats"],ssk:["ana"]},m:"no prereq"},
+ {id:"n492",n:"ENEC 492",h:3,g:"Skills courses",t:{sk:["stats"],ssk:["comm"],conc:["EBDM","PED"]}},
+ {id:"c375",n:"COMM/ENEC 375",h:3,g:"Skills courses",t:{ssk:["comm"],conc:["EBDM"]}},
+ {id:"comp110",n:"COMP 110 — Intro Programming",h:3,g:"Skills courses",t:{ssk:["prog"]}},
+ {id:"n380",n:"ENEC 380 — Environmental Economics",h:3,g:"ENEC electives",t:{conc:["EBDM","PED"],pil:["eco"]},m:"prereq ECON 101"},
+ {id:"n481",n:"ENEC 481 — Energy Economics",h:3,g:"ENEC electives",t:{conc:["EBDM"],pil:["eco"]},m:"prereq ECON 101"},
+ {id:"n485",n:"ENEC 485 — Coastal Resource Economics",h:3,g:"ENEC electives",t:{conc:["EBDM","PED"],pil:["eco"]},m:"prereq ECON 101"},
+ {id:"n325",n:"ENEC 325",h:3,g:"ENEC electives",t:{conc:["AgH","EBDM","PED"],pil:["eq"]}},
+ {id:"n350",n:"ENEC 350",h:3,g:"ENEC electives",t:{conc:["EBDM","PED"],pil:["eq"]}},
+ {id:"n370",n:"ENEC 370",h:3,g:"ENEC electives",t:{conc:["AgH","ES","PED"],pil:["env"]}},
+ {id:"n372",n:"ENEC/PLCY 372",h:3,g:"ENEC electives",t:{conc:["ES","EBDM","PED"]}},
+ {id:"n373",n:"ENEC/PLCY 373",h:3,g:"ENEC electives",t:{conc:["EBDM"],sp:1}},
+ {id:"n421",n:"ENEC 421",h:3,g:"ENEC electives",t:{conc:["EBDM","PED"],sp:1}},
+ {id:"n330",n:"ENEC 330 — Principles of Sustainability",h:3,g:"ENEC electives",t:{sp:1}},
+ {id:"n304",n:"ENEC 304",h:3,g:"ENEC electives",t:{conc:["ES"],pil:["env"]}},
+ {id:"gEq",n:"Equity-pillar course (other from list)",h:3,g:"ENEC electives",t:{pil:["eq"]}},
+ {id:"gEnv",n:"Environment-pillar course (other from list)",h:3,g:"ENEC electives",t:{pil:["env"]}},
+ {id:"gEco",n:"Economy-pillar course (other from list)",h:3,g:"ENEC electives",t:{pil:["eco"]}},
+ {id:"gC1",n:"Concentration course (other from list)",h:3,g:"ENEC electives",t:{conc:["EBDM","ES","AgH","PED"]}},
+ {id:"gC2",n:"Concentration course (other, 2nd)",h:3,g:"ENEC electives",t:{conc:["EBDM","ES","AgH","PED"]}},
+ {id:"gC3",n:"Concentration course (other, 3rd)",h:3,g:"ENEC electives",t:{conc:["EBDM","ES","AgH","PED"]}},
+ {id:"gAesth",n:"FC-AESTH course (arts/interpretation)",h:3,g:"Gen ed fillers",t:{fc:["AESTH"]},he:1},
+ {id:"gCreate",n:"FC-CREATE course",h:3,g:"Gen ed fillers",t:{fc:["CREATE"]},he:1},
+ {id:"gPast",n:"FC-PAST course (history)",h:3,g:"Gen ed fillers",t:{fc:["PAST"]},he:1},
+ {id:"gValues",n:"FC-VALUES course (ethics)",h:3,g:"Gen ed fillers",t:{fc:["VALUES"]},he:1},
+ {id:"gGlobal",n:"FC-GLOBAL course",h:3,g:"Gen ed fillers",t:{fc:["GLOBAL"]},he:1},
+ {id:"gPower",n:"FC-POWER course",h:3,g:"Gen ed fillers",t:{fc:["POWER"]},he:1},
+ {id:"gLab",n:"FC-Lab (1 cr, attached to a course)",h:1,g:"Gen ed fillers",t:{lab:1}},
+ {id:"gFad",n:"Foundations of Am. Democracy (POLI 100, HIST 126…)",h:3,g:"Gen ed fillers",t:{fad:1},he:1},
+ {id:"gComm",n:"Communication Beyond Carolina course",h:3,g:"Gen ed fillers",t:{comm:1},he:1},
+ {id:"gInter",n:"Interdisciplinary course (other)",h:3,g:"Gen ed fillers",t:{inter:1}},
+ {id:"gLfit",n:"LFIT — Lifetime Fitness",h:1,g:"Gen ed fillers",t:{lfit:1}},
+ {id:"gRes",n:"Research & Discovery course (other)",h:3,g:"Gen ed fillers",t:{res:1}},
+ {id:"gHi",n:"High-Impact Experience (internship/service)",h:3,g:"Gen ed fillers",t:{hi:1}},
+ {id:"hnrs201",n:"HNRS 201 (spring of 2nd year)",h:1.5,g:"Honors",t:{hon:1,h201:1}},
+ {id:"hx1",n:"Honors course (any additional)",h:3,g:"Honors",t:{hon:1}},
+ {id:"hx2",n:"Honors course (any additional, 2nd)",h:3,g:"Honors",t:{hon:1}},
+ {id:"hx3",n:"Honors course (any additional, 3rd)",h:3,g:"Honors",t:{hon:1}},
+];
+/* ---------- state ---------- */
+let S={track:"std",conc:"EBDM",lang:"0",abroad:false,c:{},custom:[]};
+function loadState(){try{const h=location.hash.slice(1);if(h){S=Object.assign(S,JSON.parse(decodeURIComponent(escape(atob(h)))));}}catch(e){}}
+function saveState(){try{history.replaceState(null,"","#"+btoa(unescape(encodeURIComponent(JSON.stringify(S)))));}catch(e){}}
+function st(id){return (S.c[id]&&S.c[id].s)||0}
+function allCourses(){return C.concat(S.custom.map((c,i)=>({id:"cu"+i,n:c.n,h:c.h,g:"Custom",t:c.t,m:"custom"})))}
+function eff(includePlanned){const out=[];for(const c of allCourses()){const s=st(c.id);if(s===2||(includePlanned&&s===1)){out.push(c)}}return out}
+function flags(id){return S.c[id]||{}}
+/* ---------- matching (one course = one FC) ---------- */
+function matchFC(courses){
+  const byFc={};FCS.forEach(f=>byFc[f]=[]);
+  courses.forEach(c=>{(c.t.fc||[]).forEach(f=>{if(byFc[f])byFc[f].push(c.id)})});
+  const courseTo={};let n=0;
+  function tryA(f,vis){for(const cid of byFc[f]){if(vis.has(cid))continue;vis.add(cid);
+    if(!(cid in courseTo)||tryA(courseTo[cid],vis)){courseTo[cid]=f;return true}}return false}
+  const filled={};FCS.forEach(f=>{if(tryA(f,new Set())){n++;}});
+  Object.entries(courseTo).forEach(([cid,f])=>filled[f]=cid);
+  return {count:n,filled};
+}
+function matchPillars(courses){
+  const P=["eq","env","eco"];const by={};P.forEach(p=>by[p]=[]);
+  courses.forEach(c=>{(c.t.pil||[]).forEach(p=>by[p].push(c.id))});
+  const cTo={};function tryA(p,vis){for(const cid of by[p]){if(vis.has(cid))continue;vis.add(cid);
+    if(!(cid in cTo)||tryA(cTo[cid],vis)){cTo[cid]=p;return true}}return false}
+  let base=0;P.forEach(p=>{if(tryA(p,new Set()))base++});
+  const used=new Set(Object.keys(cTo));
+  const extra=courses.filter(c=>(c.t.pil||[]).length&&!used.has(c.id)).length>0?1:0;
+  return base+extra; // out of 4
+}
+/* ---------- requirement evaluation ---------- */
+function evalAll(list){
+  const has=t=>list.some(c=>c.t[t]);
+  const ids=new Set(list.map(c=>c.id));
+  const R={};
+  // FYF
+  R.idst={need:1,have:+(has("idst101"))};
+  R.idst111={need:1,have:+(has("idst111"))};
+  R.engl={need:1,have:+(has("engl"))};
+  const launch=list.some(c=>c.t.fy)||list.some(c=>c.le&&flags(c.id).l);
+  R.fy={need:1,have:+launch};
+  R.lang={need:3,have:+S.lang};
+  // FCs
+  const fcm=matchFC(list);R.fc={need:9,have:fcm.count,filled:fcm.filled};
+  R.lab={need:1,have:+(has("lab"))};
+  // R&I
+  R.res={need:1,have:+(has("res"))};
+  R.hi={need:1,have:+(has("hi")||S.abroad)};
+  R.comm={need:1,have:+(has("comm"))};
+  R.inter={need:1,have:+(has("inter"))};
+  R.fad={need:1,have:+(has("fad"))};
+  R.lfit={need:1,have:+(has("lfit"))};
+  // ECON
+  R.egate={need:1,have:+(has("egate"))};
+  R.ecalc={need:1,have:+(list.some(c=>c.t.calc))};
+  R.e400={need:1,have:+ids.has("e400")};R.e410={need:1,have:+ids.has("e410")};R.e420={need:1,have:+ids.has("e420")};
+  const eels=list.filter(c=>c.t.eel);
+  R.eel={need:4,have:Math.min(4,eels.length)};
+  R.eel5={need:1,have:+(eels.some(c=>c.t.eel>=500))};
+  // ENEC shared
+  R.n201={need:1,have:+ids.has("n201")};
+  const capUsed=ids.has("n698")?"n698":(ids.has("n694")?"n694":null);
+  R.cap={need:1,have:+(!!capUsed)};
+  if(S.track==="std"){
+    R.n202={need:1,have:+ids.has("n202")};
+    R.earth={need:1,have:+(has("earth"))};
+    const cats={gis:0,rs:0,stats:0};
+    list.forEach(c=>(c.t.sk||[]).forEach(k=>cats[k]++));
+    R.skills={need:2,have:Math.min(2,Math.max(cats.gis,cats.rs,cats.stats)),detail:"best category: "+(["gis","rs","stats"].sort((a,b)=>cats[b]-cats[a])[0]||"")};
+    const concCourses=list.filter(c=>(c.t.conc||[]).includes(S.conc)&&c.id!==capUsed);
+    R.conc={need:5,have:Math.min(5,concCourses.length)};
+    R.bio={need:1,have:+ids.has("b101")};
+    R.c231={need:1,have:+(list.some(c=>c.t.c231))};
+    R.sci={need:1,have:+(has("sci"))};
+  }else{
+    R.n307={need:1,have:+ids.has("n307")};
+    R.sprin={need:1,have:+(has("sp"))};
+    R.pillars={need:4,have:matchPillars(list.filter(c=>c.id!==capUsed))};
+    const areas={comm:0,gisrs:0,ana:0,prog:0};
+    list.forEach(c=>(c.t.ssk||[]).forEach(k=>areas[k]++));
+    R.skills={need:2,have:Math.min(2,Math.max(areas.comm,areas.gisrs,areas.ana,areas.prog))};
+    R.smath={need:1,have:+(list.some(c=>c.t.calc))};
+    R.sstats={need:1,have:+(has("stats"))};
+  }
+  // ECON101 shared display uses R.egate.
+  // Honors
+  const honCourses=list.filter(c=>c.t.hon||(c.he&&flags(c.id).h));
+  R.h101={need:1,have:+ids.has("hnrs101")};
+  const hfy=list.some(c=>(c.t.fy&&(c.t.hon||flags(c.id).h))||(c.le&&flags(c.id).l&&flags(c.id).h));
+  R.hfy={need:1,have:+hfy};
+  R.hextra={need:1,have:+(honCourses.filter(c=>c.id!=="hnrs101").length>(hfy?1:0))};
+  R.h201={need:1,have:+(has("h201"))};
+  let hh=0;honCourses.forEach(c=>hh+=c.h);if(S.abroad)hh+=3;
+  R.hhrs={need:27,have:Math.min(27,Math.round(hh*10)/10)};
+  // hours
+  let hrs=0;list.forEach(c=>hrs+=c.h);if(S.abroad)hrs+=15;if(+S.lang>0)hrs+=3*(+S.lang<=3?Math.min(+S.lang,3):0)*0; // language via placement adds 0
+  R.hours={need:120,have:Math.min(120,hrs),raw:hrs};
+  return R;
+}
+/* ---------- rendering ---------- */
+function bar(t,p,need){const tp=Math.min(100,100*t/need),pp=Math.max(0,Math.min(100-tp,100*(p-t)/need));
+  return `<div class="bar"><div class="t" style="width:${tp}%"></div><div class="p" style="width:${pp}%"></div></div>`}
+function reqRow(label,rT,rP,note){
+  const t=rT.have,p=rP.have,need=rT.need;
+  let st;
+  if(t>=need)st=`<span class="done">✓ done</span>`;
+  else if(p>=need)st=`<span class="willdone">◐ done with planned</span>`;
+  else st=`<span class="todo">${need-p} more needed</span>`;
+  return `<div class="req"><div class="top"><span>${label}</span><span class="st">${st}</span></div>${bar(t,p,need)}${note?`<div class="note">${note}</div>`:""}</div>`;
+}
+function render(){
+  document.getElementById("concWrap").style.display=S.track==="std"?"":"none";
+  const RT=evalAll(eff(false)), RP=evalAll(eff(true));
+  // tiles
+  const hrsT=RT.hours.raw,hrsP=RP.hours.raw;
+  document.getElementById("tiles").innerHTML=
+   `<div class="tile"><div class="v">${hrsT}</div><div class="l">credit hrs taken</div><div class="p">${hrsP>hrsT?("→ "+hrsP+" with planned"):"&nbsp;"}</div></div>
+    <div class="tile"><div class="v">${Math.max(0,120-hrsP)}</div><div class="l">hrs left to 120 (after planned)</div><div class="p">&nbsp;</div></div>
+    <div class="tile"><div class="v">${RT.hhrs.have}</div><div class="l">honors hrs (of 27)</div><div class="p">${RP.hhrs.have>RT.hhrs.have?("→ "+RP.hhrs.have+" with planned"):"&nbsp;"}</div></div>`;
+  // FYF
+  document.getElementById("reqFYF").innerHTML=
+    reqRow("College Thriving (IDST 101 / HNRS 101)",RT.idst,RP.idst)+
+    reqRow("Data Literacy Lab (IDST 111L)",RT.idst111,RP.idst111)+
+    reqRow("ENGL 105",RT.engl,RP.engl,"AP English can’t replace it; spring counts (but see abroad note)")+
+    reqRow("First-Year Seminar or Launch",RT.fy,RP.fy,"ECON 101 / ENEC 201 / MATH 231 designated sections count — tag with FYL chip")+
+    reqRow("Global Language through level 3",RT.lang,RP.lang,"set via the dropdown above (placement or coursework)");
+  // FC
+  let fcHtml=reqRow("Focus Capacities (9 total)",RT.fc,RP.fc)+reqRow("Empirical Lab (FC-Lab)",RT.lab,RP.lab,"ENEC 202I includes the lab");
+  fcHtml+='<div class="detail">'+FCS.map(f=>{
+    const cid=RP.fc.filled[f];const takenCid=RT.fc.filled[f];
+    const nm=cid?(allCourses().find(c=>c.id===cid)||{}).n:null;
+    const cls=takenCid?"done":(cid?"willdone":"todo");
+    return `<div><span class="${cls}">${takenCid?"✓":(cid?"◐":"•")}</span> ${f}${nm?" — "+nm:""}</div>`;}).join("")+"</div>";
+  document.getElementById("reqFC").innerHTML=fcHtml;
+  // R&I
+  document.getElementById("reqRI").innerHTML=
+    reqRow("Research & Discovery",RT.res,RP.res,"honors thesis (ENEC 693H / ECON 692H) satisfies this")+
+    reqRow("High-Impact Experience",RT.hi,RP.hi,"any approved study abroad counts — incl. Spring Forward")+
+    reqRow("Communication Beyond Carolina",RT.comm,RP.comm)+
+    reqRow("Interdisciplinary",RT.inter,RP.inter,"ENEC 202I carries it")+
+    reqRow("Foundations of American Democracy",RT.fad,RP.fad)+
+    reqRow("Lifetime Fitness (LFIT)",RT.lfit,RP.lfit)+
+    `<div class="note">Campus Life Experience (8 events) and Supplemental Gen Ed (auto-satisfied by the double major) are not tracked here.</div>`;
+  // ENEC
+  document.getElementById("enecTitle").textContent="Environmental Studies B.A. — "+(S.track==="std"?("Standard · "+document.getElementById("concSel").selectedOptions[0].text):"Sustainability Track");
+  let eh=reqRow("ENEC 201",RT.n201,RP.n201);
+  if(S.track==="std"){
+    eh+=reqRow("ENEC 202I",RT.n202,RP.n202)+
+    reqRow("Earth system science (1)",RT.earth,RP.earth)+
+    reqRow("Skills courses (2, same category)",RT.skills,RP.skills,RP.skills.detail||"")+
+    reqRow("Concentration courses (5)",RT.conc,RP.conc,"a course used as capstone can’t also count here")+
+    reqRow("Capstone (ENEC 698 or 694H)",RT.cap,RP.cap)+
+    "<h3>Allied requirements</h3>"+
+    reqRow("BIOL 101 + 101L",RT.bio,RP.bio)+
+    reqRow("ECON 101 (shared with Econ major)",RT.egate,RP.egate)+
+    reqRow("MATH 231 (specifically)",RT.c231,RP.c231,"MATH 152 / STOR 113 do NOT satisfy the standard track")+
+    reqRow("Chem or Physics sequence (8 hrs)",RT.sci,RP.sci);
+  }else{
+    eh+=reqRow("ENEC 307",RT.n307,RP.n307,"take ENEC 201 + calculus first")+
+    reqRow("Sustainability-principles course (1)",RT.sprin,RP.sprin)+
+    reqRow("Pillars: Equity + Environment + Economy + 1 extra (4)",RT.pillars,RP.pillars)+
+    reqRow("Skills courses (2, same area)",RT.skills,RP.skills)+
+    reqRow("Capstone (ENEC 698 or 694H)",RT.cap,RP.cap)+
+    "<h3>Allied requirements</h3>"+
+    reqRow("ECON 101 (shared with Econ major)",RT.egate,RP.egate)+
+    reqRow("Math (MATH 152 / 231 / STOR 113)",RT.smath,RP.smath)+
+    reqRow("Statistics (STOR 120 / 155 / DATA 110)",RT.sstats,RP.sstats);
+  }
+  document.getElementById("reqENEC").innerHTML=eh;
+  // ECON
+  document.getElementById("reqECON").innerHTML=
+    reqRow("ECON 101 (gateway, C or better)",RT.egate,RP.egate)+
+    reqRow("Calculus (MATH 152 / 231 / STOR 113)",RT.ecalc,RP.ecalc)+
+    reqRow("ECON 400",RT.e400,RP.e400)+reqRow("ECON 410",RT.e410,RP.e410)+reqRow("ECON 420",RT.e420,RP.e420)+
+    reqRow("Electives at 400+ (4)",RT.eel,RP.eel)+
+    reqRow("…incl. one at 500+",RT.eel5,RP.eel5);
+  // Honors
+  document.getElementById("reqHNRS").innerHTML=
+    reqRow("HNRS 101 (fall of 1st year)",RT.h101,RP.h101)+
+    reqRow("Honors First-Year Seminar/Launch",RT.hfy,RP.hfy,"tag an FY course with both H + FYL, or take an honors FY seminar")+
+    reqRow("One more honors course in year 1",RT.hextra,RP.hextra)+
+    reqRow("HNRS 201 (spring of 2nd year)",RT.h201,RP.h201)+
+    reqRow("27 honors credit hours",RT.hhrs,RP.hhrs,"H-sections, HNRS courses, grad courses, contracts, thesis; semester abroad = 3");
+  renderCourses();
+  saveState();
+}
+let openGroups=null; // null = first render, use defaults
+function renderCourses(){
+  const groups=[];const byG={};
+  allCourses().forEach(c=>{if(!byG[c.g]){byG[c.g]=[];groups.push(c.g)}byG[c.g].push(c)});
+  const stName=["not taken","planned","taken"];
+  const list=document.getElementById("courseList");
+  if(openGroups!==null){ // capture current open state before rebuild
+    openGroups=new Set([...list.querySelectorAll("details.grp[open]")].map(d=>d.querySelector("summary").textContent));
+  }
+  list.innerHTML=groups.map(g=>{
+    const rows=byG[g].map(c=>{
+      const s=st(c.id);const f=flags(c.id);
+      let chips="";
+      if(c.he)chips+=`<span class="flag ${f.h?"on":""}" data-f="h" data-id="${c.id}" title="honors section">H</span>`;
+      if(c.le)chips+=`<span class="flag ${f.l?"on":""}" data-f="l" data-id="${c.id}" title="First-Year-Launch section">FYL</span>`;
+      return `<div class="crs"><div class="info"><div class="nm">${c.n}${chips}</div><div class="meta">${c.h} cr${c.m?" · "+c.m:""}</div></div>
+        <button class="state ${s===1?"planned":s===2?"taken":""}" data-id="${c.id}">${stName[s]}</button></div>`;
+    }).join("");
+    const isOpen=openGroups===null?(g==="Foundations"||g==="Economics"||g==="Env Studies core"):openGroups.has(g);
+    return `<details class="grp"${isOpen?" open":""}><summary>${g}</summary>${rows}</details>`;
+  }).join("");
+  if(openGroups===null)openGroups=new Set(["Foundations","Economics","Env Studies core"]);
+}
+/* ---------- events ---------- */
+document.addEventListener("click",e=>{
+  const b=e.target.closest("button.state");
+  if(b){const id=b.dataset.id;const cur=st(id);S.c[id]=Object.assign(flags(id),{s:(cur+1)%3});render();return}
+  const fl=e.target.closest(".flag");
+  if(fl){const id=fl.dataset.id,k=fl.dataset.f;S.c[id]=Object.assign(flags(id),{[k]:!flags(id)[k]});render();return}
+});
+document.getElementById("trackSel").addEventListener("change",e=>{S.track=e.target.value;render()});
+document.getElementById("concSel").addEventListener("change",e=>{S.conc=e.target.value;render()});
+document.getElementById("langSel").addEventListener("change",e=>{S.lang=e.target.value;render()});
+document.getElementById("abroadChk").addEventListener("change",e=>{S.abroad=e.target.checked;render()});
+document.getElementById("cAdd").addEventListener("click",()=>{
+  const n=document.getElementById("cName").value.trim();if(!n)return;
+  const h=+document.getElementById("cHrs").value||3;
+  const t={};const fc=document.getElementById("cFc").value;if(fc)t.fc=[fc];
+  const tag=document.getElementById("cTag").value;
+  if(tag==="econEl4")t.eel=400;else if(tag==="econEl5")t.eel=500;
+  else if(tag==="concAny"){t.conc=["EBDM","ES","AgH","PED"];t.pil=["eq","env","eco"]}
+  else if(tag)t[tag]=1;
+  if(document.getElementById("cHon").checked)t.hon=1;
+  S.custom.push({n,h,t});document.getElementById("cName").value="";render();
+});
+document.getElementById("saveBtn").addEventListener("click",()=>{
+  saveState();
+  const link=location.href;
+  (navigator.clipboard?navigator.clipboard.writeText(link):Promise.reject()).then(
+    ()=>{document.getElementById("saveMsg").textContent="Link copied — it encodes all progress.";},
+    ()=>{prompt("Copy this link (it stores your progress):",link);});
+});
+document.getElementById("resetBtn").addEventListener("click",()=>{
+  if(confirm("Clear all progress?")){S={track:"std",conc:"EBDM",lang:"0",abroad:false,c:{},custom:[]};history.replaceState(null,"",location.pathname);initControls();render();}
+});
+function initControls(){
+  document.getElementById("trackSel").value=S.track;
+  document.getElementById("concSel").value=S.conc;
+  document.getElementById("langSel").value=S.lang;
+  document.getElementById("abroadChk").checked=!!S.abroad;
+}
+loadState();initControls();render();
+</script>
+</body>
+</html>
