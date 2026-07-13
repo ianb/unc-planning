@@ -102,8 +102,6 @@ details.grp summary{cursor:pointer;font-size:13.5px;font-weight:600;padding:7px 
           <option value="AgH">Agriculture &amp; Health</option>
           <option value="PED">Population, Env &amp; Development</option>
         </select></div>
-      <div><label class="ctl">Global Language completed/placed</label>
-        <select id="langSel"><option value="0">None yet</option><option value="1">Level 1</option><option value="2">Level 2</option><option value="3">Level 3 (requirement met)</option></select></div>
     </div>
     <label class="chk" style="display:block;margin-top:10px"><input type="checkbox" id="abroadChk"> Spring Forward semester abroad (Spring 2027) — counts ~15 transfer hrs, High-Impact credit, +3 honors hrs</label>
   </div>
@@ -156,6 +154,8 @@ const C=[ // id,name,hrs,group, tags
  {id:"idst101",n:"IDST 101 — College Thriving (non-honors)",h:1,g:"Foundations",t:{idst101:1}},
  {id:"idst111",n:"IDST 111L — Data Literacy Lab",h:1,g:"Foundations",t:{idst111:1},m:"1st year"},
  {id:"engl105",n:"ENGL 105 — Composition & Rhetoric",h:3,g:"Foundations",t:{engl:1},m:"sections 200+ = discipline-focused"},
+ {id:"span105",n:"SPAN 105 — Spanish for High Beginners",h:4,g:"Foundations",t:{lang:2},m:"tested in · accelerated 101+102 · Level 2"},
+ {id:"span203",n:"SPAN 203 — Intermediate Spanish I",h:3,g:"Foundations",t:{lang:3},m:"completes the Level-3 language requirement · prereq SPAN 105"},
  {id:"fysem",n:"First-Year Seminar (any dept)",h:3,g:"Foundations",t:{fy:1},he:1,m:"H = honors FY seminar"},
  {id:"m130",n:"MATH 130 — Precalculus",h:3,g:"Math & Stats",t:{fc:["QUANT"]},m:"if placement requires"},
  {id:"m231",n:"MATH 231 — Calculus I",h:4,g:"Math & Stats",t:{fc:["QUANT"],calc:1,c231:1},he:1,m:"required for ENEC standard track; keeps all doors open"},
@@ -276,7 +276,7 @@ function evalAll(list){
   R.engl={need:1,have:+(has("engl"))};
   const launch=list.some(c=>c.t.fy)||list.some(c=>c.le&&flags(c.id).l);
   R.fy={need:1,have:+launch};
-  R.lang={need:3,have:+S.lang};
+  R.lang={need:2,have:ids.has("span203")?2:(ids.has("span105")?1:0)};
   // FCs
   const fcm=matchFC(list);R.fc={need:9,have:fcm.count,filled:fcm.filled};
   R.lab={need:1,have:+(has("lab"))};
@@ -330,7 +330,7 @@ function evalAll(list){
   let hh=0;honCourses.forEach(c=>hh+=c.h);if(S.abroad)hh+=3;
   R.hhrs={need:27,have:Math.min(27,Math.round(hh*10)/10)};
   // hours
-  let hrs=0;list.forEach(c=>hrs+=c.h);if(S.abroad)hrs+=15;if(+S.lang>0)hrs+=3*(+S.lang<=3?Math.min(+S.lang,3):0)*0; // language via placement adds 0
+  let hrs=0;list.forEach(c=>hrs+=c.h);if(S.abroad)hrs+=15;
   R.hours={need:120,have:Math.min(120,hrs),raw:hrs};
   return R;
 }
@@ -360,7 +360,7 @@ function render(){
     reqRow("Data Literacy Lab (IDST 111L)",RT.idst111,RP.idst111)+
     reqRow("ENGL 105",RT.engl,RP.engl,"AP English can’t replace it; spring counts (but see abroad note)")+
     reqRow("First-Year Seminar or Launch",RT.fy,RP.fy,"ECON 101 / ENEC 201 / MATH 231 designated sections count — tag with FYL chip")+
-    reqRow("Global Language through level 3",RT.lang,RP.lang,"set via the dropdown above (placement or coursework)");
+    reqRow("Global Language — Spanish through Level 3",RT.lang,RP.lang,"tested into SPAN 105 → SPAN 105 then SPAN 203 finishes it (exempt from the first-year deadline; Costa Rica courses may advance it)");
   // FC
   let fcHtml=reqRow("Focus Capacities (9 total)",RT.fc,RP.fc)+reqRow("Empirical Lab (FC-Lab)",RT.lab,RP.lab,"ENEC 202I includes the lab");
   fcHtml+='<div class="detail">'+FCS.map(f=>{
@@ -453,7 +453,6 @@ document.addEventListener("click",e=>{
 });
 document.getElementById("trackSel").addEventListener("change",e=>{S.track=e.target.value;render()});
 document.getElementById("concSel").addEventListener("change",e=>{S.conc=e.target.value;render()});
-document.getElementById("langSel").addEventListener("change",e=>{S.lang=e.target.value;render()});
 document.getElementById("abroadChk").addEventListener("change",e=>{S.abroad=e.target.checked;render()});
 document.getElementById("cAdd").addEventListener("click",()=>{
   const n=document.getElementById("cName").value.trim();if(!n)return;
@@ -479,7 +478,6 @@ document.getElementById("resetBtn").addEventListener("click",()=>{
 function initControls(){
   document.getElementById("trackSel").value=S.track;
   document.getElementById("concSel").value=S.conc;
-  document.getElementById("langSel").value=S.lang;
   document.getElementById("abroadChk").checked=!!S.abroad;
 }
 loadState();initControls();render();
